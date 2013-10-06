@@ -1,0 +1,36 @@
+<!-- New Version of ProcessFiles -->
+<job>
+	<script language="vbscript" src="log\logFunctions.vbs"/>
+	<script language="vbscript" src="copyfiles\library\copyfilesFunction.vbs" />
+	<script language="vbscript" src="copyfiles\library\confirmfilesFunction.vbs" />
+	<script language="vbscript" src="copyfiles\library\removefilesFunction.vbs"/>
+	<script language="vbscript">
+		'Standard variables
+		Dim oLog, logFileName, sourcePath, destPath, filenamePattern
+		Dim copiedSuffix, confirmedSuffix
+		
+		logFileName = "c:\cd\data\copyfiles.log"
+		sourcePath = "\\cdrecorder2\temp\cdmastering\raw\"
+		destPath = "c:\cd\data\incoming\"
+		audioPath = "c:\cd\data\audio\"
+		'filenamePattern = ".+\-.+\-.+\-song\d+\.wav"
+		filenamePattern = ".+\_TRACK\d+\.mp3"
+		copiedSuffix = "copied"
+		confirmedSuffix = "confirmed"
+		
+		
+		
+		Set oLog = openLog( logFileName, Now & " - CopyFiles Started." ) 
+		
+		'1. copy files that are ready to be copied
+		copyFiles sourcePath, destPath, filenamePattern, copiedSuffix, oLog
+		'2. confirm files that have previously been copied
+		'confirmFilesOld sourcePath, audioPath, copiedSuffix, confirmedSuffix, oLog 
+		confirmFiles sourcePath, audioPath, copiedSuffix, confirmedSuffix, oLog 
+		'3. remove files that have previously been confirmed
+		removeFiles sourcePath, confirmedSuffix, oLog
+
+
+		closeLog oLog, Now & " - CopyFiles Completed."	
+	</script>
+</job>

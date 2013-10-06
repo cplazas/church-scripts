@@ -1,0 +1,16 @@
+<!-- Rename Tester -->
+<job>
+	<script language="vbscript" src="..\..\log\logFunctions.vbs"/>
+	<script language="vbscript" src="renameFunction.vbs"/>
+	<script language="vbscript">
+		Dim oLog
+		Set oLog = openLog( "renameTest.log", Now & " - Starting Testing Rename Functions." ) 
+		
+		Dim sourcePath
+		sourcePath = "c:\temp\"
+		
+		rename sourcePath, oLog 
+
+		closeLog oLog, Now & " - Completed Testing Rename Functions."	
+	</script>
+</job>

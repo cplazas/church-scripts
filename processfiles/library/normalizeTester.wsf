@@ -1,0 +1,21 @@
+<!-- Normalize Tester -->
+<job>
+	<script language="vbscript" src="..\..\log\logFunctions.vbs"/>
+	<script language="vbscript" src="renameFunction.vbs" />
+	<script language="vbscript" src="normalizeFunction.vbs"/>
+	<script language="vbscript">
+		Dim oLog
+		Set oLog = openLog( "normalizeTest.log", Now & " - Starting Testing Normalize Functions." ) 
+		
+		Dim sourcePath, normalizePath
+		sourcePath = "c:\vbseditor\"
+		normalizePath = "c:\vbseditor"
+		
+		oLog.WriteLine Now & " - Have to rename input files first."
+		rename sourcePath, oLog 
+		oLog.WriteLine Now & " - Now normalizing."
+		normalize sourcePath, normalizePath, oLog
+
+		closeLog oLog, Now & " - Completed Testing Normalize Functions."	
+	</script>
+</job>

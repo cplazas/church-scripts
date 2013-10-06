@@ -1,0 +1,19 @@
+<!-- Normalize Tester -->
+<job>
+	<script language="vbscript" src="..\..\log\logFunctions.vbs"/>
+	<script language="vbscript" src="copyfilesFunction.vbs" />
+	<script language="vbscript">
+		Dim oLog
+		Set oLog = openLog( "copyfilesTest.log", Now & " - Starting Testing CopyFiles Functions." ) 
+		
+		Dim sourcePath, destPath, filenamePattern, copiedSuffix
+		sourcePath = "c:\work\test\source\"
+		destPath = "c:\work\test\dest\"
+		filenamePattern = ".+\-.+\-.+\-song.+\.wav"
+		copiedSuffix = "-copied"
+
+		copyFiles sourcePath, destPath, filenamePattern, copiedSuffix, oLog
+
+		closeLog oLog, Now & " - Completed Testing CopyFiles Functions."	
+	</script>
+</job>

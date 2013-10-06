@@ -1,0 +1,41 @@
+<!-- New Version of ProcessFiles -->
+<job>
+	<script language="vbscript" src="log\logFunctions.vbs"/>
+	<script language="vbscript" src="processfiles\library\renameFunction.vbs" />
+	<script language="vbscript" src="processfiles\library\sizecdsFunction.vbs" />
+	<script language="vbscript" src="processfiles\library\normalizeFunction.vbs"/>
+	<script language="vbscript" src="processfiles\library\convertFunction.vbs"/>
+	<script language="vbscript" src="processfiles\library\movefilesFunction.vbs"/>
+	<script language="vbscript">
+		'Standard variables
+		Dim oLog, logFileName, sourcePath, destPath, SOXPath, MP3InfoPath
+		Dim rejectPath, normalizePath, LAMEPath
+		
+		logFileName = "c:\cd\data\processfiles.log"
+		sourcePath = "c:\cd\data\incoming\"
+		destPath = "c:\cd\data\audio\"
+		SOXPath = "c:\cd\bin\sox"
+		MP3InfoPath = "c:\cd\bin\sox"
+		rejectPath = "c:\cd\data\reject\"
+		normalizePath = "c:\cd\bin\normalize"
+		LAMEPath = "c:\cd\bin\lame"
+		
+		
+		Set oLog = openLog( logFileName, Now & " - ProcessFiles Started." ) 
+		
+		'1. Rename
+		'rename sourcePath, oLog
+		'2. Size CDs
+		'sizecds sourcePath, rejectPath, SOXPath, MP3InfoPath, True, oLog 
+		sizecds sourcePath, rejectPath, SOXPath, MP3InfoPath, False, oLog 
+
+		'3. Normalize
+		'normalize sourcePath, normalizePath, oLog
+		'4. Convert
+		'convert sourcePath, LAMEPath, oLog
+		'5. Move Files
+		movefiles sourcePath, destPath, oLog
+
+		closeLog oLog, Now & " - ProcessFiles Completed."	
+	</script>
+</job>

@@ -1,0 +1,14 @@
+<job>
+	<script language="vbscript" src="cdmaker\library\mastermaker.vbs"/>
+	<reference Object = "ADODB.Recordset"/>
+	<reference Object = "ADODB.Connection"/>
+	<script language="vbscript">
+		Dim maker
+		
+		Set maker = new MasterMaker
+		maker.Connection = "DSN=Tape;"
+		maker.PTBurnJobDir = "c:\ptburnjobs\"
+		maker.MakeMasters
+		Set maker = nothing		
+	</script>
+</job>

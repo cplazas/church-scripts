@@ -1,0 +1,18 @@
+<job>
+	<script language="vbscript" src="cdmaker\library\label.vbs"/>
+	<script language="vbscript" src="cdmaker\library\job.vbs"/>
+	<script language="vbscript" src="cdmaker\library\cdmaker.vbs"/>
+	<reference Object = "ADODB.Recordset"/>
+	<reference Object = "ADODB.Connection"/>
+	<script language="vbscript">
+		Dim maker
+		
+		Set maker = new CDMaker
+		maker.Connection = "DSN=Tape;"
+		maker.AudioFilesDir = "c:\cd\data\audio\"
+		maker.PTBurnJobDir = "c:\ptburnjobs\"
+		maker.LabelFileDir = "c:\cd\data\label\"
+		maker.Go
+		Set maker = nothing		
+	</script>
+</job>

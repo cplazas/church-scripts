@@ -1,0 +1,21 @@
+<!-- SizeCDs Tester -->
+<job>
+	<script language="vbscript" src="..\..\log\logFunctions.vbs"/>
+	<script language="vbscript" src="sizecdsFunction.vbs"/>
+	<script language="vbscript">
+		Dim oLog
+		Set oLog = openLog( "sizecdsTest.log", Now & " - Starting Testing SizeCDs Functions." ) 
+		
+		Dim sourcePath, rejectPath, soxPath, mp3infoPath, wavMode
+		sourcePath = "c:\temp\"
+		rejectPath = "c:\temp\reject\"
+		soxPath = "c:\temp"
+		mp3infoPath = ""
+		wavMode = True
+		
+		'rename sourcePath, oLog 
+		sizecds sourcePath, rejectPath, soxPath, mp3infoPath, wavMode, oLog
+
+		closeLog oLog, Now & " - Completed Testing SizeCDs Functions."	
+	</script>
+</job>

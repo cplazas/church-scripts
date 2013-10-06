@@ -1,0 +1,17 @@
+<!-- MoveFiles Tester -->
+<job>
+	<script language="vbscript" src="..\..\log\logFunctions.vbs"/>
+	<script language="vbscript" src="movefilesFunction.vbs" />
+	<script language="vbscript">
+		Dim oLog
+		Set oLog = openLog( "movefilesTest.log", Now & " - Starting Testing Move Files Functions." ) 
+		
+		Dim sourcePath, destPath
+		sourcePath = "c:\vbseditor\"
+		destPath = "c:\vbseditor\dest\"
+
+		movefiles sourcePath, destPath, oLog
+
+		closeLog oLog, Now & " - Completed Testing Move Files Functions."	
+	</script>
+</job>

@@ -1,0 +1,21 @@
+<!-- Normalize Tester -->
+<job>
+	<script language="vbscript" src="..\..\log\logFunctions.vbs"/>
+	<script language="vbscript" src="confirmfilesFunction.vbs" />
+	<script language="vbscript">
+		Dim oLog
+		Set oLog = openLog( "confirmfilesTest.log", Now & " - Starting Testing ConfirmFiles Functions." ) 
+		
+		Dim sourcePath, destPath, filenamePattern, copiedSuffix, confirmedSuffix
+		sourcePath = "c:\work\test\source\"
+		destPath = "c:\work\test\dest\"
+		'filenamePattern = ".+\-.+\-.+\-song.+\.wav"
+		copiedSuffix = "copied"
+		confirmedSuffix = "confirmed"
+
+			'confirmFilesOld sourcePath, destPath, copiedSuffix, confirmedSuffix, oLog
+		confirmFiles sourcePath, destPath, copiedSuffix, confirmedSuffix, oLog
+
+		closeLog oLog, Now & " - Completed Testing ConfirmFiles Functions."	
+	</script>
+</job>

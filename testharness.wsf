@@ -1,0 +1,18 @@
+<job>
+	<script language="vbscript" src="cdmaker\library\label.vbs"/>
+	<reference Object = "ADODB.Recordset"/>
+	<reference Object = "ADODB.Connection"/>
+	<script language="vbscript">
+		Dim l, oConn
+		
+		Set l = new Label
+		
+		Set oConn = createobject("ADODB.Connection")
+		oConn.ConnectionString = "DSN=Tape;"
+	    oConn.Open
+		
+		l.LoadFromDB 3511,oConn
+		l.CreateLabelFile  "c:\cd\data\label\word-cd-label.doc", "C:\temp", False, "1000" 
+		
+	</script>
+</job>

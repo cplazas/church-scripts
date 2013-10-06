@@ -1,0 +1,21 @@
+<!-- Normalize Tester -->
+<job>
+	<script language="vbscript" src="..\..\log\logFunctions.vbs"/>
+	<script language="vbscript" src="removefilesFunction.vbs" />
+	<script language="vbscript">
+		Dim oLog
+		Set oLog = openLog( "removefilesTest.log", Now & " - Starting Testing RemoveFiles Functions." ) 
+		
+		Dim sourcePath, destPath, filenamePattern, copiedSuffix, confirmedSuffix
+		sourcePath = "c:\work\test\source\"
+		destPath = "c:\work\test\dest\"
+		'filenamePattern = ".+\-.+\-.+\-song.+\.wav"
+		copiedSuffix = "copied"
+		confirmedSuffix = "confirmed"
+
+		'confirmFilesOld sourcePath, destPath, confirmedSuffix, copiedSuffix, oLog
+		removeFiles sourcePath, confirmedSuffix,  oLog
+
+		closeLog oLog, Now & " - Completed Testing RemoveFiles Functions."	
+	</script>
+</job>

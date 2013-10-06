@@ -1,0 +1,17 @@
+<!-- Convert Tester -->
+<job>
+	<script language="vbscript" src="..\..\log\logFunctions.vbs"/>
+	<script language="vbscript" src="convertFunction.vbs" />
+	<script language="vbscript">
+		Dim oLog
+		Set oLog = openLog( "convertTest.log", Now & " - Starting Testing Convert Functions." ) 
+		
+		Dim sourcePath, LAMEPath
+		sourcePath = "c:\vbseditor\"
+		LAMEPath = "c:\vbseditor"
+
+		convert sourcePath, LAMEPath, oLog
+
+		closeLog oLog, Now & " - Completed Testing Convert Functions."	
+	</script>
+</job>
