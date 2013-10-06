@@ -129,6 +129,7 @@ Class Job
 	
 	Public Sub SubmitJobToPTBurn( strAudioFilesDir, strLabelFileDir, strPTBurnJobsDir)
 		'wscript.stdout.writeline "cucu"
+		Dim FSO, jobFile, jobFileName,fldr,fc,f,regex, strLabelFile
 		If bPrintOnly Or RequiredFilesExist(strAudioFilesDir) Then
 			
 			'do some work
@@ -137,21 +138,25 @@ Class Job
 			
 			'first we make the label so it can be referenced in the job
 			If bDVD Then
-				oLabel.CreateLabelFile "c:\cd\data\label\word-dvd-label.doc", strLabelFileDir, bDVD, CStr(nID), strPTBurnJobsDir
+				'''oLabel.CreateLabelFile "c:\cd\data\label\word-dvd-label.doc", strLabelFileDir, bDVD, CStr(nID), strPTBurnJobsDir
+				strLabelFile = "dvd-label.std"
 			Else
 				If bMaster Then
-					oLabel.CreateLabelFile "c:\cd\data\label\word-cd-label-master.doc", strLabelFileDir, bDVD, CStr(nID), strPTBurnJobsDir
+					'''oLabel.CreateLabelFile "c:\cd\data\label\word-cd-label-master.doc", strLabelFileDir, bDVD, CStr(nID), strPTBurnJobsDir
+					strLabelFile = "cd-label-master.std"
 				Else
 					If bPulpit Then
-						oLabel.CreateLabelFile "c:\cd\data\label\word-cd-label-bw.doc", strLabelFileDir, bDVD, CStr(nID), strPTBurnJobsDir
+						'''oLabel.CreateLabelFile "c:\cd\data\label\word-cd-label-bw.doc", strLabelFileDir, bDVD, CStr(nID), strPTBurnJobsDir
+						strLabelFile = "cd-label-pulpit.std"
 					Else
-						oLabel.CreateLabelFile "c:\cd\data\label\word-cd-label.doc", strLabelFileDir, bDVD, CStr(nID), strPTBurnJobsDir
+						'''oLabel.CreateLabelFile "c:\cd\data\label\word-cd-label.doc", strLabelFileDir, bDVD, CStr(nID), strPTBurnJobsDir
+						strLabelFile = "cd-label.std"
 					End If
 				End If
 			End If
 					
 			'now we write the data into the job file 
-			Dim FSO, jobFile, jobFileName,fldr,fc,f,regex
+			
 			Set FSO = CreateObject("Scripting.FileSystemObject")
 			'jobFileName = strPTBurnJobsDir & oLabel.GetLabelKey & ".jrq"
 			jobFileName = strPTBurnJobsDir & "JOB_" & nID & ".jrq" 
@@ -180,12 +185,11 @@ Class Job
 			End If
 			
 			jobFile.WriteLine "Copies = " & nCopies
-			
-			If bDVD Then
-				jobFile.WriteLine "PrintLabel = " & strLabelFileDir & oLabel.GetLabelKey & "_DVD" & "-" & CStr(nID) & ".PRN"
-			Else
-				jobFile.WriteLine "PrintLabel = " & strLabelFileDir & oLabel.GetLabelKey & "-" & CStr(nID) & ".PRN"
-			End If
+			jobFile.WriteLine "PrintLabel = " & strLabelFileDir & strLabelFile
+			jobfile.WriteLine "MergeField = " & oLabel.ServiceTitle
+			jobfile.WriteLine "MergeField = " & oLabel.ServiceDate
+			jobfile.WriteLine "MergeField = " & oLabel.ServiceDay
+			jobfile.WriteLine "MergeField = " & oLabel.ServiceMinister
 			
 			jobFile.Close
 			
