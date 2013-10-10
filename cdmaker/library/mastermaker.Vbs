@@ -31,11 +31,12 @@ Class MasterMaker
 		sRobotStatusFile = strPTBurnJobDir & "status\" & sRobotName & ".txt"
 		'sRobotStatusFile = strPTBurnJobDir & "status\" & "Copy of " & sRobotName & ".txt" 'for testing only
 		'wscript.stdout.writeline sRobotStatusFile 'for testing only
-		iCartridgeFill = CInt(ReadIni(sRobotStatusFile, "System" , "CartridgeFill0")) 
+		iCartridgeFill = Cint(ReadIni(sRobotStatusFile, "System" , "CartridgeFill0"))
+                'WScript.StdOut.WriteLine "ReadINI: [" & ReadIni(sRobotStatusFile, "System" , "CartridgeFill0") & "]"
 		
 		If iCartridgeFill < 3 Then
 			'send email
-			'wscript.stdout.writeline "Problem Cartridge fill: " & iCartridgeFill
+			'WScript.StdOut.WriteLine "Problem Cartridge fill: " & iCartridgeFill
 			SendEmailMessage True,"Unable to make masters! There is insufficient ink in the printer. Cartridge Level: " & iCartridgeFill
 		Else
 			'wscript.stdout.writeline "Cartridge fill: " & iCartridgeFill
@@ -53,7 +54,7 @@ Class MasterMaker
 				sSummary = sSummary & "          Ink Cartridge Level: " & iCartridgeFill & "%" & vbCr & vbLf & vbCr & vbLf
 				sSummary = sSummary & "     Current Run Information: " & vbCr & vbLf
 				  
-				'wscript.stdout.writeline "Discs in hopper: " & iNumberOfDiscsInHopper
+				'WScript.StdOut.WriteLine "Discs in hopper: " & iNumberOfDiscsInHopper
 				Set oConn = createobject("ADODB.Connection")
 				oConn.ConnectionString = strConnection
 				oConn.Open
@@ -87,7 +88,7 @@ Class MasterMaker
 				Else
 					iDiscsToMake = oRS.RecordCount
 				End If
-				'wscript.stdout.writeline "Discs To Make: " & iDiscsToMake
+				'WScript.StdOut.WriteLine "Discs To Make: " & iDiscsToMake
 				sSummary = sSummary & "          Number of masters to be made in this run: " & iDiscsToMake & vbCr & vbLf
 				sSummary = sSummary & "          Number of masters that cannot be made this run: " & oRS.RecordCount - iDiscsToMake & vbCr & vbLf
 				
@@ -97,7 +98,7 @@ Class MasterMaker
 					sSQL = "insert into jobs (tapeid,copies,remainingdiscs,status,master)"
 					sSQL = sSQL & " values ( " & oRS.Fields("ID") & ", 1,1,1,'y')" 
 					oConn.Execute sSQL
-					'wscript.stdout.writeline sSQL
+					'WScript.StdOut.WriteLine sSQL
 					oRS.MoveNext
 				Next 
 				
@@ -107,7 +108,7 @@ Class MasterMaker
 				Set oConn = Nothing								
 				
 				'5. Send email report showing how many discs were attempted to be printed and how many were not submitted
-				'wscript.stdout.writeline sSummary
+				'WScript.StdOut.WriteLine sSummary
 				SendEmailMessage False, sSummary
 			End If
 	
@@ -183,7 +184,7 @@ Class MasterMaker
 		wscript.sleep(10000) 'sleep for 10 seconds while waiting for the command to be executed
 	End Sub
 
-Private Function ReadIni( myFilePath, mySection, myKey )
+Public Function ReadIni( myFilePath, mySection, myKey )
     ' This function returns a value read from an INI file
     '
     ' Arguments:
@@ -203,6 +204,11 @@ Private Function ReadIni( myFilePath, mySection, myKey )
     Const ForWriting   = 2
     Const ForAppending = 8
 
+    'File format
+    Const SystemDefault = -2
+    Const Unicode = -1
+    Const ASCII = 0
+
     Dim intEqualPos
     Dim objFSO, objIniFile
     Dim strFilePath, strKey, strLeftString, strLine, strSection
@@ -213,14 +219,16 @@ Private Function ReadIni( myFilePath, mySection, myKey )
     strFilePath = Trim( myFilePath )
     strSection  = Trim( mySection )
     strKey      = Trim( myKey )
+    'wscript.stdout.writeline "ReadINI: " & strFilePath & " " & strSection & " " & strKey
 
     If objFSO.FileExists( strFilePath ) Then
-        Set objIniFile = objFSO.OpenTextFile( strFilePath, ForReading, False )
+        Set objIniFile = objFSO.OpenTextFile( strFilePath, ForReading, False, SystemDefault   )
         Do While objIniFile.AtEndOfStream = False
             strLine = Trim( objIniFile.ReadLine )
 
             ' Check if section is found in the current line
             If LCase( strLine ) = "[" & LCase( strSection ) & "]" Then
+
                 strLine = Trim( objIniFile.ReadLine )
 
                 ' Parse lines until the next section is reached
