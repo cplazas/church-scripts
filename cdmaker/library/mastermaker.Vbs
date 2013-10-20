@@ -1,5 +1,5 @@
 Class MasterMaker
-	Private strPTBurnJobDir, strConnection
+	Private strPTBurnJobDir, strConnection, oLog
 	
 	Public Property Get PTBurnJobDir
 		PTBurnJobDir = strPTBurnJobDir
@@ -17,9 +17,17 @@ Class MasterMaker
 		strConnection = varNewVal
 	End Property
 	
+	Public Property Get Logger
+		Logger = oLog
+	End Property
+	
+	Public Property Let Logger(Byref varNewVal)
+		Set oLog = varNewVal
+	End Property
+	
 	Public Sub MakeMasters
-		Dim  sRobotName, sRobotStatusFile, iCartridgeFill, iNumberOfDiscsInHopper
-		Dim  sSystemStatusFile, iDiscsToMake, sSummary, iWaitingMasters
+		Dim  sRobotName, sRobotStatusFile, iCartridgeFill, iNumberOfDiscsInHopper, sCartridgeFill
+		Dim  sSystemStatusFile, iDiscsToMake, sSummary, iWaitingMasters, sNumberOfDiscsInHopper
 		
 		sSystemStatusFile = strPTBurnJobDir & "status\systemstatus.txt"
 		
@@ -27,27 +35,52 @@ Class MasterMaker
 		'   If ink level Is 1% Or lower send a notification email And Exit the program
 		
 		'read the status file To get the duplicator name
+		oLog.WriteLine Now & " - Attempting to find duplicator robot name."
 		sRobotName = ReadIni(sSystemStatusFile, "RobotList" , "Robot0")
+		If sRobotName = "" Then
+			SendEmailMessage True, "Unable to make masters! Cannot find duplicator robot in the status file: " & sSystemStatusFile & ". PTBurn SDK service might not be running."
+			oLog.WriteLine Now & " - Unable to make masters! Cannot find duplicator robot in the status file: " & sSystemStatusFile & ". PTBurn SDK service might not be running."
+			Exit Sub
+		End If
+		
 		sRobotStatusFile = strPTBurnJobDir & "status\" & sRobotName & ".txt"
 		'sRobotStatusFile = strPTBurnJobDir & "status\" & "Copy of " & sRobotName & ".txt" 'for testing only
 		'wscript.stdout.writeline sRobotStatusFile 'for testing only
-		iCartridgeFill = Cint(ReadIni(sRobotStatusFile, "System" , "CartridgeFill0"))
-                'WScript.StdOut.WriteLine "ReadINI: [" & ReadIni(sRobotStatusFile, "System" , "CartridgeFill0") & "]"
+		oLog.WriteLine Now & " - Getting ink level for duplicator robot: " & sRobotName & " from file: " & sRobotStatusFile
+		sCartridgeFill = ReadIni(sRobotStatusFile, "System" , "CartridgeFill0")
+		
+		If Trim(sCartridgeFill) =  "" Then
+			SendEmailMessage True, "Unable to make masters! Could not read ink level."
+			oLog.WriteLine Now & " - Unable to make masters! Could not read ink level."
+			Exit Sub 
+		End If
+		
+		iCartridgeFill = Cint(sCartridgeFill)
+            'WScript.StdOut.WriteLine "ReadINI: [" & ReadIni(sRobotStatusFile, "System" , "CartridgeFill0") & "]"
 		
 		If iCartridgeFill < 3 Then
 			'send email
 			'WScript.StdOut.WriteLine "Problem Cartridge fill: " & iCartridgeFill
 			SendEmailMessage True,"Unable to make masters! There is insufficient ink in the printer. Cartridge Level: " & iCartridgeFill
+			oLog.WriteLine Now & " - Unable to make masters! There is insufficient ink in the printer. Cartridge Level: " & iCartridgeFill
 		Else
 			'wscript.stdout.writeline "Cartridge fill: " & iCartridgeFill
 		
 			'2. Get # of discs in auto cd duplicator hopper.
 			SendCheckBinsCommand sRobotName
-			iNumberOfDiscsInHopper = CInt(ReadIni(sRobotStatusFile, "System" , "DiscsInLeftBin"))
+			sNumberOfDiscsInHopper = ReadIni(sRobotStatusFile, "System" , "DiscsInLeftBin")
+			If Trim(sNumberOfDiscsInHopper) = "" Then
+				sNumberOfDiscsInHopper = "0"
+				oLog.WriteLine Now & " - Could not read number of discs in hopper from file: " & sRobotStatusFile & "."
+			End If
+			
+			iNumberOfDiscsInHopper = CInt(sNumberOfDiscsInHopper)
 			If iNumberOfDiscsInHopper <= 0 Then
 			  'insufficient or unknown number of discs in the hopper. Abort and send email
 			  SendEmailMessage True, "Unable to make masters! Unknown or insufficient number of discs in the duplicator."
+			  oLog.WriteLine Now & " - Unable to make masters! Unknown or insufficient number of discs in the duplicator."
 			Else
+			      oLog.WriteLine Now & " - Querying DB to determine how many master discs can be made in this run."
 				sSummary = "Master Maker Summary Report" & vbCr & vbLf & vbCr & vbLf 
 				sSummary = sSummary & "     System Status: " & vbCr & vbLf
 				sSummary = sSummary & "          Discs In Hopper: " & iNumberOfDiscsInHopper & vbCr & vbLf
@@ -69,7 +102,7 @@ Class MasterMaker
 				'3. Get tapeid of masters to be printed
 				'    SQL Query that gets any tapes that have not successfuly had a master printed
 				'    The query limits to tapes having a year equal to or greater than the "current" year
-				'    based an a date seven days prior to the date of execution. This takes care of crossing
+	:			'    based an a date seven days prior to the date of execution. This takes care of crossing
 				'    into a new year for up to seven days:
 				'      select * from "Tapes" t 
 				'      where "Year" >= extract(year from (now() - 7) ) 
@@ -92,6 +125,7 @@ Class MasterMaker
 				sSummary = sSummary & "          Number of masters to be made in this run: " & iDiscsToMake & vbCr & vbLf
 				sSummary = sSummary & "          Number of masters that cannot be made this run: " & oRS.RecordCount - iDiscsToMake & vbCr & vbLf
 				
+				oLog.WriteLine Now & " - Inserting cdmaker jobs for each master to be made in this run."
 				'4. Insert job records for the # of discs 
 				For i = 1 To iDiscsToMake
 					
@@ -110,6 +144,8 @@ Class MasterMaker
 				'5. Send email report showing how many discs were attempted to be printed and how many were not submitted
 				'WScript.StdOut.WriteLine sSummary
 				SendEmailMessage False, sSummary
+				oLog.WriteLine Now & " - Summary of Master Maker run:"
+				oLog.WriteLine sSummary
 			End If
 	
 		End If
@@ -181,86 +217,87 @@ Class MasterMaker
 		jobFile.WriteLine "ClientID=Administrator"
 		jobFile.WriteLine "RobotName = " & strRobotName
 		jobFile.Close
+		oLog.WriteLine Now & " - Sent CheckBins command to PTBurn SDK."
 		wscript.sleep(10000) 'sleep for 10 seconds while waiting for the command to be executed
 	End Sub
 
-Public Function ReadIni( myFilePath, mySection, myKey )
-    ' This function returns a value read from an INI file
-    '
-    ' Arguments:
-    ' myFilePath  [string]  the (path and) file name of the INI file
-    ' mySection   [string]  the section in the INI file to be searched
-    ' myKey       [string]  the key whose value is to be returned
-    '
-    ' Returns:
-    ' the [string] value for the specified key in the specified section
-    '
-    ' CAVEAT:     Will return a space if key exists but value is blank
-    '
-    ' Written by Keith Lacelle
-    ' Modified by Denis St-Pierre and Rob van der Woude
-
-    Const ForReading   = 1
-    Const ForWriting   = 2
-    Const ForAppending = 8
-
-    'File format
-    Const SystemDefault = -2
-    Const Unicode = -1
-    Const ASCII = 0
-
-    Dim intEqualPos
-    Dim objFSO, objIniFile
-    Dim strFilePath, strKey, strLeftString, strLine, strSection
-
-    Set objFSO = CreateObject( "Scripting.FileSystemObject" )
-
-    ReadIni     = ""
-    strFilePath = Trim( myFilePath )
-    strSection  = Trim( mySection )
-    strKey      = Trim( myKey )
-    'wscript.stdout.writeline "ReadINI: " & strFilePath & " " & strSection & " " & strKey
-
-    If objFSO.FileExists( strFilePath ) Then
-        Set objIniFile = objFSO.OpenTextFile( strFilePath, ForReading, False, SystemDefault   )
-        Do While objIniFile.AtEndOfStream = False
-            strLine = Trim( objIniFile.ReadLine )
-
-            ' Check if section is found in the current line
-            If LCase( strLine ) = "[" & LCase( strSection ) & "]" Then
-
-                strLine = Trim( objIniFile.ReadLine )
-
-                ' Parse lines until the next section is reached
-                Do While Left( strLine, 1 ) <> "["
-                    ' Find position of equal sign in the line
-                    intEqualPos = InStr( 1, strLine, "=", 1 )
-                    If intEqualPos > 0 Then
-                        strLeftString = Trim( Left( strLine, intEqualPos - 1 ) )
-                        ' Check if item is found in the current line
-                        If LCase( strLeftString ) = LCase( strKey ) Then
-                            ReadIni = Trim( Mid( strLine, intEqualPos + 1 ) )
-                            ' In case the item exists but value is blank
-                            If ReadIni = "" Then
-                                ReadIni = " "
-                            End If
-                            ' Abort loop when item is found
-                            Exit Do
-                        End If
-                    End If
-
-                    ' Abort if the end of the INI file is reached
-                    If objIniFile.AtEndOfStream Then Exit Do
-
-                    ' Continue with next line
-                    strLine = Trim( objIniFile.ReadLine )
-                Loop
-            Exit Do
-            End If
-        Loop
-        objIniFile.Close
-    End If
-End Function
+	Public Function ReadIni( myFilePath, mySection, myKey )
+	    ' This function returns a value read from an INI file
+	    '
+	    ' Arguments:
+	    ' myFilePath  [string]  the (path and) file name of the INI file
+	    ' mySection   [string]  the section in the INI file to be searched
+	    ' myKey       [string]  the key whose value is to be returned
+	    '
+	    ' Returns:
+	    ' the [string] value for the specified key in the specified section
+	    '
+	    ' CAVEAT:     Will return a space if key exists but value is blank
+	    '
+	    ' Written by Keith Lacelle
+	    ' Modified by Denis St-Pierre and Rob van der Woude
+	
+	    Const ForReading   = 1
+	    Const ForWriting   = 2
+	    Const ForAppending = 8
+	
+	    'File format
+	    Const SystemDefault = -2
+	    Const Unicode = -1
+	    Const ASCII = 0
+	
+	    Dim intEqualPos
+	    Dim objFSO, objIniFile
+	    Dim strFilePath, strKey, strLeftString, strLine, strSection
+	
+	    Set objFSO = CreateObject( "Scripting.FileSystemObject" )
+	
+	    ReadIni     = ""
+	    strFilePath = Trim( myFilePath )
+	    strSection  = Trim( mySection )
+	    strKey      = Trim( myKey )
+	    'wscript.stdout.writeline "ReadINI: " & strFilePath & " " & strSection & " " & strKey
+	
+	    If objFSO.FileExists( strFilePath ) Then
+	        Set objIniFile = objFSO.OpenTextFile( strFilePath, ForReading, False, SystemDefault   )
+	        Do While objIniFile.AtEndOfStream = False
+	            strLine = Trim( objIniFile.ReadLine )
+	
+	            ' Check if section is found in the current line
+	            If LCase( strLine ) = "[" & LCase( strSection ) & "]" Then
+	
+	                strLine = Trim( objIniFile.ReadLine )
+	
+	                ' Parse lines until the next section is reached
+	                Do While Left( strLine, 1 ) <> "["
+	                    ' Find position of equal sign in the line
+	                    intEqualPos = InStr( 1, strLine, "=", 1 )
+	                    If intEqualPos > 0 Then
+	                        strLeftString = Trim( Left( strLine, intEqualPos - 1 ) )
+	                        ' Check if item is found in the current line
+	                        If LCase( strLeftString ) = LCase( strKey ) Then
+	                            ReadIni = Trim( Mid( strLine, intEqualPos + 1 ) )
+	                            ' In case the item exists but value is blank
+	                            If ReadIni = "" Then
+	                                ReadIni = " "
+	                            End If
+	                            ' Abort loop when item is found
+	                            Exit Do
+	                        End If
+	                    End If
+	
+	                    ' Abort if the end of the INI file is reached
+	                    If objIniFile.AtEndOfStream Then Exit Do
+	
+	                    ' Continue with next line
+	                    strLine = Trim( objIniFile.ReadLine )
+	                Loop
+	            Exit Do
+	            End If
+	        Loop
+	        objIniFile.Close
+	    End If
+	End Function
 
 
 End Class

@@ -2,17 +2,23 @@
 	<script language="vbscript" src="cdmaker\library\label.vbs"/>
 	<script language="vbscript" src="cdmaker\library\job.vbs"/>
 	<script language="vbscript" src="cdmaker\library\cdmaker.vbs"/>
+	<script language="vbscript" src="log\logFunctions.vbs"/>
 	<reference Object = "ADODB.Recordset"/>
 	<reference Object = "ADODB.Connection"/>
 	<script language="vbscript">
-		Dim maker
+		Dim maker, oLog, logFileName
+		
+		logFileName = "c:\cd\data\cdmaker-" & Minute(Now) & ".log"
+		Set oLog = openLog( logFileName, Now & " - CDMaker Started." )
 		
 		Set maker = new CDMaker
 		maker.Connection = "DSN=Tape;"
 		maker.AudioFilesDir = "c:\cd\data\audio\"
 		maker.PTBurnJobDir = "c:\ptburnjobs\"
 		maker.LabelFileDir = "c:\cd\data\label\"
+		maker.Logger = oLog
 		maker.Go
-		Set maker = nothing		
+		Set maker = Nothing
+		closeLog oLog, Now & " - CDMaker Completed."		
 	</script>
 </job>
