@@ -13,6 +13,7 @@
 		sourcePath = "\\cdrecorder2\temp\cdmastering\raw\"
 		destPath = "c:\cd\data\incoming\"
 		audioPath = "c:\cd\data\audio\"
+		dropBoxPath = "c:\Users\cplazas\Dropbox\Public\"
 		'filenamePattern = ".+\-.+\-.+\-song\d+\.wav"
 		filenamePattern = ".+\_TRACK\d+\.mp3"
 		copiedSuffix = "copied"
@@ -23,12 +24,14 @@
 		Set oLog = openLog( logFileName, Now & " - CopyFiles Started." ) 
 		
 		'1. copy files that are ready to be copied
-		copyFiles sourcePath, destPath, filenamePattern, copiedSuffix, oLog
+		copyFiles sourcePath, destPath, filenamePattern, copiedSuffix, oLog 
 		'2. confirm files that have previously been copied
 		'confirmFilesOld sourcePath, audioPath, copiedSuffix, confirmedSuffix, oLog 
 		confirmFiles sourcePath, audioPath, copiedSuffix, confirmedSuffix, oLog 
 		'3. remove files that have previously been confirmed
 		removeFiles sourcePath, confirmedSuffix, oLog
+		'4. copy files from incoming to the dropbox folder
+		copyFiles destpath, dropBoxPath, filenamePattern, "", oLog
 
 
 		closeLog oLog, Now & " - CopyFiles Completed."	

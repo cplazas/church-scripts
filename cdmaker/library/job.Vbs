@@ -5,10 +5,12 @@ Function CreateLabel()
 End Function
 
 Class Job
-	Private nID, oLabel, nLabelID, nCopies, nStatus, nGoodDiscs, nBadDiscs, nRemainingDiscs, bPrintOnly, bDVD, bMaster, bPulpit
+	Private nID, oLabel, nLabelID, nCopies, nStatus, nGoodDiscs, nBadDiscs, nRemainingDiscs, bPrintOnly, bDVD, bMaster, bPulpit, oLog
 	
 	Public Sub Initialize( id, Byref oConn, byref ologfile )
 		Dim strSQL, oRS
+		ologfile.WriteLine Now & " Initializing Job: " & id
+		Set oLog = ologfile
 		strSQL = "select * from jobs where id = " & id
 		Set oRS = CreateObject("ADODB.Recordset")
 		oRS.Open strSQL, oConn, adOpenKeyset
@@ -42,10 +44,11 @@ Class Job
 			End If
 			
 			Set oLabel = CreateLabel()'new Label
-			Label.LoadFromDB nLabelID,oConn
+			Label.LoadFromDB nLabelID, oConn
 		End If
 		oRS.Close
 		Set oRS = Nothing
+		ologfile.WriteLine Now & " Finished initializing Job: " & id
 	End Sub
 		
 	Public Sub GetStatusFromDB( oConn )
@@ -73,7 +76,7 @@ Class Job
 		'5 - failed (error) 
 		Dim FSO, folder, fc, fl, regex
 		
-		 
+		oLog.WriteLine Now & " Getting job status for Job: " & nID & " for Service: " & oLabel.GetLabelKey()
 		Set FSO = CreateObject("Scripting.FileSystemObject") 
 		If fso.FileExists( strPTBurnJobsDir & "JOB_" & nID & ".jrq" ) Then
 			nStatus = 2
@@ -116,7 +119,7 @@ Class Job
 				End If
 			End If 
 		End If
-		
+		oLog.WriteLine Now & "     Job Status: " & nStatus
 	End Sub
 	
 	Public Sub SetStatusInDB( oConn )
@@ -129,6 +132,7 @@ Class Job
 	
 	Public Sub SubmitJobToPTBurn( strAudioFilesDir, strLabelFileDir, strPTBurnJobsDir)
 		'wscript.stdout.writeline "cucu"
+		oLog.WriteLine Now & " Submitting Job: " & nID & " for Service: " & oLabel.GetLabelKey() & " To PTBurn."
 		Dim FSO, jobFile, jobFileName,fldr,fc,f,regex, strLabelFile
 		If bPrintOnly Or RequiredFilesExist(strAudioFilesDir) Then
 			
@@ -192,11 +196,13 @@ Class Job
 			jobfile.WriteLine "MergeField = " & oLabel.ServiceMinister
 			
 			jobFile.Close
+			oLog.WriteLine Now & " Job was submitted."
 			
 		End If
 	End Sub
 	
 	Public Function RequiredFilesExist( strAudioFilesDir )
+	      oLog.WriteLine Now & "     Checking if required files exist for current job."
 		Dim fso, fldr, fc, f, count
 		Dim regex
 		
@@ -221,6 +227,7 @@ Class Job
 			RequiredFilesExist = True
 		Else
 			RequiredFilesExist = False
+			oLog.WriteLine Now & "    Unable to find required files."
 		End If
 		
 	End Function

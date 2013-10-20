@@ -7,10 +7,13 @@
 		Set oLog = openLog( "copyfilesTest.log", Now & " - Starting Testing CopyFiles Functions." ) 
 		
 		Dim sourcePath, destPath, filenamePattern, copiedSuffix
-		sourcePath = "c:\work\test\source\"
-		destPath = "c:\work\test\dest\"
-		filenamePattern = ".+\-.+\-.+\-song.+\.wav"
-		copiedSuffix = "-copied"
+		'sourcePath = "c:\work\test\source\"
+		sourcePath = "C:\temp\src\"
+		'destPath = "c:\work\test\dest\"
+		destPath = "c:\temp\dest\"
+		'filenamePattern = ".+\-.+\-.+\-song.+\.wav"
+		filenamePattern = ".+\_TRACK\d+\.mp3"
+		copiedSuffix = "copied"
 
 		copyFiles sourcePath, destPath, filenamePattern, copiedSuffix, oLog
 

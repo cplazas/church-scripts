@@ -1,14 +1,19 @@
 <job>
 	<script language="vbscript" src="cdmaker\library\mastermaker.vbs"/>
+	<script language="vbscript" src="log\logFunctions.vbs"/>
 	<reference Object = "ADODB.Recordset"/>
 	<reference Object = "ADODB.Connection"/>
 	<script language="vbscript">
-		Dim maker
+		Dim maker, oLog
 		
+		logFileName = "c:\cd\data\mastermaker.log"
+		Set oLog = openLog( logFileName, Now & " - MasterMaker Started." )
 		Set maker = new MasterMaker
 		maker.Connection = "DSN=Tape;"
 		maker.PTBurnJobDir = "c:\ptburnjobs\"
+		maker.Logger = oLog
 		maker.MakeMasters
-		Set maker = nothing		
+		Set maker = Nothing
+		closeLog oLog, Now & " - MasterMaker Completed."		
 	</script>
 </job>

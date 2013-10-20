@@ -4,7 +4,7 @@ End Function
 
 Class CDMaker
 	
-	Private strAudioFilesDir, strPTBurnJobDir, strLabelFileDir, strConnection
+	Private strAudioFilesDir, strPTBurnJobDir, strLabelFileDir, strConnection, oLog
 	
 	Public Property Get AudioFilesDir
 		AudioFilesDir = strAudioFilesDir
@@ -38,8 +38,15 @@ Class CDMaker
 		strConnection = varNewVal
 	End Property
 
+	Public Property Get Logger
+		Logger = oLog
+	End Property
 
-	Public Sub Go()
+	Public Property Let Logger(Byref varNewVal)
+		Set oLog = varNewVal
+	End Property
+
+	Public Sub Go( )
 		Dim oConn, ProcessSet, WshShell
 		'Dim strConnection
 		
@@ -49,51 +56,39 @@ Class CDMaker
 		If  isempty(strConnection) Or isempty(strAudioFilesDir) Or isempty (strPTBurnJobDir) Or isempty(strLabelFileDir) Then
 			'some necessary stuff was not set
 			wscript.stdout.writeline "Error: CDMaker was not initialized properly."
+			oLog.WriteLine Now & " Error: CDMaker was not initialized properly."
+			
 			If isempty(strConnection) Then
 				wscript.stdout.writeline "     Connection property was not set."
+				oLog.WriteLine Now & "     Connection property was not set."
 			End If
 			If isempty(strAudioFilesDir) Then
 				wscript.stdout.writeline "     AudioFilesDir property was not set."
+				oLog.WriteLine Now & "     AudioFilesDir property was not set."
 			End If
 			If isempty (strPTBurnJobDir) Then
 				wscript.stdout.writeline "     PTBurnJobsDir property was not set."
+				oLog.WriteLine Now & "     PTBurnJobsDir property was not set."
 			End If
 			If isempty(strLabelFileDir) Then
 				wscript.stdout.writeline "     LabelFileDir property was not set."
+				oLog.WriteLine Now & "     LabelFileDir property was not set."
 			End If
 						
 			Exit Sub
 		End If 
 		
-		'The below is no longer needed now that PTBurn SDK runs as a windows service. 1/21/2009
-		'here we make sure ptburn is running before we do anything else
-		'Set ProcessSet = GetObject("winmgmts:{impersonationLevel=impersonate}").ExecQuery("select * from Win32_Process where name ='ptburn.exe' ") 
-		'If  ProcessSet.Count > 0 Then
-		'	'ptburn is already running
-		'	WScript.Sleep(50)
-		'Else 
-		'	Set WshShell = WScript.CreateObject("WScript.Shell") 
-		'	WshShell.Run """C:\Program Files\Primera Technology\PTBurn Server\Server\ptburn.exe"""  
-		'	WScript.Sleep(1000)
-		'End If
-
-		
 		Set oConn = createobject("ADODB.Connection")
 		oConn.ConnectionString = strConnection
 		oConn.Open
-		
+
+		oLog.WriteLine Now & " Checking for new Jobs..."
 		If CheckForNewJobs(oConn) Then
 			Dim jobarray
 			jobarray = GrabNewJobs(oConn)
 			
-			'If Not ServiceIsRunning Then
-			'	StartService
-			'End If
-			
-			'wscript.stdout.writeline lbound(jobarray)
-			'wscript.stdout.writeline ubound(jobarray)
 			For i = lbound(jobarray) To ubound(jobarray)
-				'wscript.stdout.writeline "test"
+				oLog.WriteLine Now & " Submitting Job: " & jobarray(i).ID & " for Service: " & jobarray(i).Label.GetLabelKey()
 				jobarray(i).SubmitJobToPTBurn strAudioFilesDir, strLabelFileDir, strPTBurnJobDir
 				'wscript.stdout.writeline jobarray(i).Label.ServiceTitle
 			Next
@@ -101,7 +96,7 @@ Class CDMaker
 		End If
 		
 
-
+		oLog.WriteLine Now & " Checking for existing Jobs..."
 		If CheckForRunningJobs(oConn) Then
 			Dim currentjobs
 			currentjobs = GetRunningJobs(oConn)

@@ -31,7 +31,10 @@ Public Sub copyFiles( sourcePath, destPath, filenamePattern, copiedSuffix, oLog)
 			'now we rename it to -copied
 			'Dim newname
 			newname = split(file.name, "." )
-			fso.movefile sourcePath & file.name, sourcePath & newname(0) & "-" & copiedSuffix & "." & newname(1)
+			If copiedSuffix <> "" Then
+				oLog.WriteLine Now & " - renaming file: " & sourcePath & file.name & " To: " & sourcePath & newname(0) & "-" & copiedSuffix & "." & newname(1)
+				fso.movefile sourcePath & file.name, sourcePath & newname(0) & "-" & copiedSuffix & "." & newname(1)
+			End If
 		End If
 	Next	  
 	
