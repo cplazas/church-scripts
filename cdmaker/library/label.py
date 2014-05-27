@@ -1,69 +1,30 @@
-Class Label
-	Private nID, dDate, sDay, sService, sMinister, sSermonTitle
-	
-	Public Property Get ID
-		ID = nID
-	End Property
+import datetime
 
-	Public Property Get ServiceDate
-		ServiceDate = dDate
-	End Property
-	
-	Public Property Get ServiceDay
-		ServiceDay = sDay
-	End Property
-	
-	Public Property Get ServiceNumber
-		ServiceNumber = nService
-	End Property
-	
-	Public Property Get ServiceMinister
-		ServiceMinister = sMinister
-	End Property
-	
-	Public Property Get ServiceTitle
-		ServiceTitle = sSermonTitle
-	End Property
+class Label:
+	# def __init__(id, date, day, service, minister, sermon_title):
+	# 	self.id = id
+	# 	self.date = date
+	# 	self.day = day
+	# 	self.service = service
+	# 	self.minister = minister
+	# 	self.sermon_title = sermon_title
 	
 	
-	Public Sub LoadFromDB ( nID, byref oConn )
-		Dim oRS, sSQL
-		Set oRS = CreateObject("ADODB.Recordset")
-		sSQL = "SELECT * FROM ""Tapes"" WHERE ""ID"" = '" & nID & "'"
-		oRS.Open sSQL,oConn,adOpenKeyset
-		If oRS.RecordCount > 0 Then
-			nID = oRS.Fields("ID")
-			dDate = CDate(oRS.Fields("Month") & "/" & oRS.Fields("Date") & "/" & oRS.Fields("Year"))
-			sDay = oRS.Fields("Day")
-			sService = oRS.Fields("Service#")
-			sMinister = oRS.Fields("Minister")
-			sSermonTitle = oRS.Fields("Sermon Title")
-		End If
-		oRS.Close
-		Set oRS = Nothing
-	End Sub
-	
-	Public Function GetLabelKey()
-		Dim sDate, sMonth, sYear,sAMPM
-		'MergeFile = "080803PM.TXT"
-		If month(dDate) < 10 Then
-			sMonth = "0" & CStr(month(dDate))
-		Else
-			sMonth = CStr(month(dDate))
-		End If
-		
-		If day(dDate) < 10 Then
-			sDate = "0" & CStr(day(dDate))
-		Else
-			sDate = CStr(day(dDate))
-		End If
-		
-		sYear = right(Cstr(year(dDate)),2)
-		sAMPM = ucase(right(sDay,2))
-		
-		GetLabelKey = sMonth & sDate & sYear & sAMPM
+	def load_from_db (self, id,  connection ):
+		cursor = connection.cursor()
+		cursor.execute("SELECT * FROM \"Tapes\" WHERE \"ID\" = ?", id)
 
-	End Function
+		row = cursor.fetchone()
+		if row:
+		    print row
+		    self.id = row.ID
+		    self.date = datetime.date(row.Year, row.Month, row.Date)
+		    self.day = row.Day
+		    self.service = row.__getattribute__("Service#")
+		    self.minister = row.Minister
+		    self.sermon_title = row.__getattribute__("Sermon Title")
 	
-End class
+	def get_label_key(self)
+		return self.date.strftime("%m%d%Y") + self.day[-2:]
+
 	

@@ -1,5 +1,6 @@
 import logging
 import pyodbc
+from job import Job
 
 class CDMaker:
 
@@ -38,43 +39,69 @@ class CDMaker:
 
 		logging.debug(" Checking for new Jobs...")
 		if check_for_new_jobs():
-			# Dim jobarray
-			# jobarray = GrabNewJobs(oConn)
-			
-			# For i = lbound(jobarray) To ubound(jobarray)
-			# 	oLog.WriteLine Now & " Submitting Job: " & jobarray(i).ID & " for Service: " & jobarray(i).Label.GetLabelKey()
-			# 	jobarray(i).SubmitJobToPTBurn strAudioFilesDir, strLabelFileDir, strPTBurnJobDir
-			# 	'wscript.stdout.writeline jobarray(i).Label.ServiceTitle
-			# Next
-			
-		
+			jobarray = grab_new_jobs(conn)
+			for job in jobarray:
+				logging.debug(" Submitting Job: %s for Service: %s" % (job.id, job.label.get_label_key()))
+				job.submit_job_to_ptburn(audio_files_dir, label_file_dir, ptburn_job_dir)
 
 		logging.debug(" Checking for existing Jobs...")
 		if check_for_running_jobs():
-			# Dim currentjobs
-			# currentjobs = GetRunningJobs(oConn)
-			# 	'wscript.stdout.writeline "one"
-			# 	'wscript.stdout.writeline ubound(currentjobs)
-			# For i = lbound(currentjobs) To ubound(currentjobs)
-			# 	currentjobs(i).GetStatusFromPTBurn strPTBurnJobDir, strLabelFileDir
-			# 	currentjobs(i).SetStatusInDB oConn
-			# 	'wscript.stdout.writeline "whateva"
-			# 	'wscript.stdout.writeline currentjobs(i).Status
-			# Next
+			currentjobs = get_running_jobs(conn)
+			for job in currentjobs:
+				job.get_status_from_ptburn(ptburn_job_dir, label_file_dir)
+				job.set_status_in_db(conn)
 
-		conn.close()
+	def check_for_new_jobs(self, connection):
+		sSQL = "SELECT COUNT(*) FROM JOBS WHERE STATUS = 1"
 
-	def check_for_new_jobs(self):
-		pass
+		cursor = connection.cursor()
+		cursor.execute(sSQL)
 
-	def grab_new_jobs (self):
-		pass
+		row = cursor.fetchone()
+		if row:
+			if row[0] > 0:
+				return True
+
+		return False
+
+	def grab_new_jobs (self, connection):
+		jobs = []		
+		sSQL = "SELECT ID FROM JOBS WHERE STATUS = 1"
+		cursor = connection.cursor()
+		cursor.execute(sSQL)
+
+		row = cursor.fetchone()
+		while row:
+			new_job = Job(row.ID, connection)
+			new_job.status = 2
+			new_job.set_status_in_db(connection)
+			jobs.append(new_job)
+			row = cursor.fetchone()
+
+		return jobs
 
 	def check_for_running_jobs(self):
-		pass
+		sSQL = "SELECT COUNT(*) FROM JOBS WHERE STATUS > 1 AND STATUS < 4"
+		cursor = connection.cursor()
+		cursor.execute(sSQL)
 
-	def get_running_jobs (self):
-		pass
+		row = cursor.fetchone()
+		if row:
+			if row[0] > 0:
+				return True
 
+		return False
 
+	def get_running_jobs (self, connection):
+		jobs = []
+		sSQL = "SELECT ID FROM JOBS WHERE STATUS > 1 AND STATUS < 4"
+		cursor = connection.cursor()
+		cursor.execute(sSQL)
 
+		row = cursor.fetchone()
+		while row:
+			new_job = Job(row.ID, connection)
+			jobs.append(new_job)
+			row = cursor.fetchone()
+
+		return jobs
