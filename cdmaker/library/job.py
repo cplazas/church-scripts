@@ -106,7 +106,6 @@ class Job:
 					else:
 						label_file = "cd-label.std"
 
-					
 			# now we write the data into the job file 
 			job_file_name = "%sJOB_%s.jrq" % (ptburn_jobs_dir, nID)
 
