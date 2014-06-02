@@ -5,7 +5,7 @@ from label import Label
 
 class Job:
     
-    def __init__(id, connection):
+    def __init__(self, id, connection):
 
         logging.debug (" Initializing Job: %s" % id)
 
@@ -74,14 +74,14 @@ class Job:
             #   End If
             # Next
             self.status = 4
-        elif os.path.existss(job_file_base + ".err"):
+        elif os.path.exists(job_file_base + ".err"):
             #either of these conditions result in an error, the first means there was an acutal error from ptburn 
             self.status = 5
         else:
             #the second means that we couldn't even find the job file for this running job so we flag it as an error 
             self.status = 5
         
-        logging.debug("     Job Status: %s" % nStatus)
+        logging.debug("     Job Status: %s" % self.status)
 
     def set_status_in_db(self, connection):
         strSQL = "update jobs set status = ?, lastupdate = now() where id = ?"
@@ -92,7 +92,7 @@ class Job:
     def submit_job_to_ptburn(self, audio_files_dir, label_file_dir, ptburn_jobs_dir):
         logging.debug(" Submitting Job: %s for Service: %s To PTBurn." % (self.id, self.label.get_label_key))
 
-        if self.printonly or required_files_exist(audio_files_dir):         
+        if self.printonly or self.required_files_exist(audio_files_dir):         
             # do some work
             # first we make the label so it can be referenced in the job
             if self.dvd:
@@ -107,7 +107,7 @@ class Job:
                         label_file = "cd-label.std"
 
             # now we write the data into the job file 
-            job_file_name = "%sJOB_%s.jrq" % (ptburn_jobs_dir, nID)
+            job_file_name = "%sJOB_%s.jrq" % (ptburn_jobs_dir, self.id)
 
             with open(job_file_name, 'w') as f:
                 
@@ -119,14 +119,14 @@ class Job:
                     f.write("VolumeName = %s\n" % self.label.get_label_key())
                     for audio_file in file_list:
                         f.write("AudioFile = %s\n" % audio_file)
-                    f.write("CloseDisc = YES")
-                    
+                    f.write("CloseDisc = YES\n")
+
                 f.write("Copies = %s\n" % self.copies)
-                f.write("PrintLabel = %s\\%s\n" % (audio_files_dir, label_file))
-                f.write("MergeField =  %s\n" % self.label.sermon_title)
-                f.write("MergeField =  %s\n" % self.label.date)
-                f.write("MergeField =  %s\n" % self.label.day)
-                f.write("MergeField =  %s\n" % self.label.minister)
+                f.write("PrintLabel = %s%s\n" % (label_file_dir, label_file))
+                f.write("MergeField = %s\n" % self.label.sermon_title)
+                f.write("MergeField = %s\n" % self.label.date.strftime("%m/%d/%Y"))
+                f.write("MergeField = %s\n" % self.label.day)
+                f.write("MergeField = %s\n" % self.label.minister)
 
             logging.debug(" Job was submitted.")
 

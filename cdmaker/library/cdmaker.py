@@ -3,8 +3,12 @@ import pyodbc
 from job import Job
 
 class CDMaker:
+    COUNT_NEW_JOBS_SQL = "SELECT COUNT(*) FROM JOBS WHERE STATUS = 1"
+    GRAB_NEW_JOBS_SQL = "SELECT ID FROM JOBS WHERE STATUS = 1"
+    COUNT_RUNNING_JOBS_SQL = "SELECT COUNT(*) FROM JOBS WHERE STATUS > 1 AND STATUS < 4"
+    GRAB_RUNNING_JOBS_SQL = "SELECT ID FROM JOBS WHERE STATUS > 1 AND STATUS < 4"
 
-    def __init__(audio_files_dir, ptburn_job_dir, label_file_dir, connection_string):
+    def __init__(self, audio_files_dir, ptburn_job_dir, label_file_dir, connection_string):
         self.audio_files_dir = audio_files_dir
         self.ptburn_job_dir = ptburn_job_dir
         self.label_file_dir = label_file_dir
@@ -35,27 +39,24 @@ class CDMaker:
         logging.debug(" Initialized sucessfully...") 
         
         conn = pyodbc.connect(self.connection_string)
-        cursor = conn.cursor()
 
         logging.debug(" Checking for new Jobs...")
-        if check_for_new_jobs():
-            jobarray = grab_new_jobs(conn)
+        if self.check_for_new_jobs(conn):
+            jobarray = self.grab_new_jobs(conn)
             for job in jobarray:
                 logging.debug(" Submitting Job: %s for Service: %s" % (job.id, job.label.get_label_key()))
-                job.submit_job_to_ptburn(audio_files_dir, label_file_dir, ptburn_job_dir)
+                job.submit_job_to_ptburn(self.audio_files_dir, self.label_file_dir, self.ptburn_job_dir)
 
         logging.debug(" Checking for existing Jobs...")
-        if check_for_running_jobs():
-            currentjobs = get_running_jobs(conn)
+        if self.check_for_running_jobs(conn):
+            currentjobs = self.get_running_jobs(conn)
             for job in currentjobs:
-                job.get_status_from_ptburn(ptburn_job_dir, label_file_dir)
+                job.get_status_from_ptburn(self.ptburn_job_dir, self.label_file_dir)
                 job.set_status_in_db(conn)
 
     def check_for_new_jobs(self, connection):
-        sSQL = "SELECT COUNT(*) FROM JOBS WHERE STATUS = 1"
-
         cursor = connection.cursor()
-        cursor.execute(sSQL)
+        cursor.execute(self.COUNT_NEW_JOBS_SQL)
 
         row = cursor.fetchone()
         if row:
@@ -66,9 +67,8 @@ class CDMaker:
 
     def grab_new_jobs (self, connection):
         jobs = []       
-        sSQL = "SELECT ID FROM JOBS WHERE STATUS = 1"
         cursor = connection.cursor()
-        cursor.execute(sSQL)
+        cursor.execute(self.GRAB_NEW_JOBS_SQL)
 
         row = cursor.fetchone()
         while row:
@@ -80,10 +80,9 @@ class CDMaker:
 
         return jobs
 
-    def check_for_running_jobs(self):
-        sSQL = "SELECT COUNT(*) FROM JOBS WHERE STATUS > 1 AND STATUS < 4"
+    def check_for_running_jobs(self, connection):
         cursor = connection.cursor()
-        cursor.execute(sSQL)
+        cursor.execute(self.COUNT_RUNNING_JOBS_SQL)
 
         row = cursor.fetchone()
         if row:
@@ -94,9 +93,8 @@ class CDMaker:
 
     def get_running_jobs (self, connection):
         jobs = []
-        sSQL = "SELECT ID FROM JOBS WHERE STATUS > 1 AND STATUS < 4"
         cursor = connection.cursor()
-        cursor.execute(sSQL)
+        cursor.execute(self.GRAB_RUNNING_JOBS_SQL)
 
         row = cursor.fetchone()
         while row:
