@@ -72,7 +72,7 @@ class CDMaker:
 
         row = cursor.fetchone()
         while row:
-            new_job = Job(row.ID, connection)
+            new_job = Job(row[0], connection)
             new_job.status = 2
             new_job.set_status_in_db(connection)
             jobs.append(new_job)
@@ -98,7 +98,7 @@ class CDMaker:
 
         row = cursor.fetchone()
         while row:
-            new_job = Job(row.ID, connection)
+            new_job = Job(row[0], connection)
             jobs.append(new_job)
             row = cursor.fetchone()
 

@@ -24,7 +24,7 @@ class Job:
             self.master = (row.master == "y")
             self.pulpit = (row.pulpit == "y")
             self.label = Label()
-            self.label.load_from_db(self.id, connection)
+            self.label.load_from_db(self.label_id, connection)
 
         logging.debug(" Finished initializing Job: %s" % id)
 
@@ -50,7 +50,6 @@ class Job:
         logging.debug(" Getting job status for Job: %s for Service: %s" % (self.id, self.label.get_label_key()))
 
         job_file_base = "%s%s%s" % (ptburn_jobs_dir, "JOB_", self.id)
-
         if os.path.exists(job_file_base + ".jrq"):
             self.status = 2
         elif os.path.exists(job_file_base + ".inp"):
@@ -87,10 +86,11 @@ class Job:
         strSQL = "update jobs set status = ?, lastupdate = now() where id = ?"
         cursor = connection.cursor()
         cursor.execute(strSQL, self.status, self.id)
+        cursor.commit()
 
     
     def submit_job_to_ptburn(self, audio_files_dir, label_file_dir, ptburn_jobs_dir):
-        logging.debug(" Submitting Job: %s for Service: %s To PTBurn." % (self.id, self.label.get_label_key))
+        logging.debug(" Submitting Job: %s for Service: %s To PTBurn." % (self.id, self.label.get_label_key()))
 
         if self.printonly or self.required_files_exist(audio_files_dir):         
             # do some work
