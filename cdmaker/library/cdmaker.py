@@ -46,6 +46,8 @@ class CDMaker:
             for job in jobarray:
                 logging.debug(" Submitting Job: %s for Service: %s" % (job.id, job.label.get_label_key()))
                 job.submit_job_to_ptburn(self.audio_files_dir, self.label_file_dir, self.ptburn_job_dir)
+        else:
+            logging.debug("  Unable to find new Jobs. Continuing.")
 
         logging.debug(" Checking for existing Jobs...")
         if self.check_for_running_jobs(conn):
@@ -53,6 +55,8 @@ class CDMaker:
             for job in currentjobs:
                 job.get_status_from_ptburn(self.ptburn_job_dir, self.label_file_dir)
                 job.set_status_in_db(conn)
+        else:
+            logging.debug("  Unable to find existing Jobs. Continuing.")
 
     def check_for_new_jobs(self, connection):
         cursor = connection.cursor()

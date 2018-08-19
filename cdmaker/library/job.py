@@ -83,6 +83,7 @@ class Job:
         logging.debug("     Job Status: %s" % self.status)
 
     def set_status_in_db(self, connection):
+        logging.debug(" Setting db status for job: %s to status: %s", self.id, self.status)
         strSQL = "update jobs set status = ?, lastupdate = now() where id = ?"
         cursor = connection.cursor()
         cursor.execute(strSQL, self.status, self.id)
@@ -140,6 +141,6 @@ class Job:
         if len(file_list) > 0:
             return True
 
-        logging.debug("    Unable to find required files.")
+        logging.debug("     Unable to find required files.")
         return False
 
